@@ -1,1 +1,1 @@
-ZeroMQ Reliable Request-Reply Paranoid Pirate Pattern example - worker
+ZeroMQ Reliable Request-Reply Paranoid Pirate Pattern - worker module
