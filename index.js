@@ -32,11 +32,9 @@ PPWorker.prototype._handleMessage = function () {
     this._initHeartbeat();
   }
   if (args.length == 2 && args[1].toString('utf8') === this.PPP_HEARTBEAT.toString('utf8')) {
-    console.log(Date.now() + ' - Received heartbeat reply');
     this.liveness = this.heartbeatLiveness;
   }
   else if (args.length == 2) {
-    console.log(Date.now() + ' - Sending work to client');
     this.worker.send([args[1], 'Here is some work for you']);
     this.liveness = this.heartbeatLiveness;
   }
@@ -49,7 +47,6 @@ PPWorker.prototype._handleMessage = function () {
 PPWorker.prototype._checkHeartbeat = function () {
   if (--this.liveness === 0) {
     // we haven't received a heartbeat in too long
-    console.log('Haven\'t received a heartbeat reply in too long');
     this.reconnectTimerId = setTimeout(this._heartbeatFailure.bind(this), this.interval);
     if (this.heartbeatTimerId) {
       clearTimeout(this.heartbeatTimerId);
@@ -57,7 +54,6 @@ PPWorker.prototype._checkHeartbeat = function () {
     }
   }
   else {
-    console.log(Date.now() + ' - Sending heartbeat');
     this.worker.send(this.PPP_HEARTBEAT);
     this._initHeartbeat();
   }
@@ -72,10 +68,8 @@ PPWorker.prototype._initSocket = function () {
   this.worker.monitor()
     .on('connect', function () {
       if (!this.zmqConnected) {
-        console.log(Date.now() + ' - Connected to ' + this.url);
         this.worker.removeAllListeners('message');
         this.worker.on('message', this._handleMessage.bind(this));
-        console.log(Date.now() + ' - Sending READY');
         this.worker.send(this.PPP_READY);
         this.liveness = this.heartbeatLiveness;
         this.zmqConnected = true;
