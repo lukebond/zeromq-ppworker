@@ -2,10 +2,15 @@ var zmq = require('zmq'),
     util = require('util'),
     EventEmitter = require('events').EventEmitter;
 
-var PPWorker = function (options) {
+var PPWorker = function (options, workerFn) {
   EventEmitter.call(this);
   this.PPP_READY = new Buffer([1]);
   this.PPP_HEARTBEAT = new Buffer([2]);
+
+  if (!workerFn) {
+    throw new Error('Worker function must be supplied');
+  }
+  this.workerFn = workerFn;
 
   this.heartbeatLiveness = options.heartbeatLiveness || 5;
   this.heartbeatInterval = options.heartbeatInterval || 1000;
@@ -35,8 +40,10 @@ PPWorker.prototype._handleMessage = function () {
     this.liveness = this.heartbeatLiveness;
   }
   else if (args.length == 2) {
-    this.worker.send([args[1], 'Here is some work for you']);
-    this.liveness = this.heartbeatLiveness;
+    this.workerFn(function (data) {
+      this.worker.send([args[1], data]);
+      this.liveness = this.heartbeatLiveness;
+    }.bind(this));
   }
   else {
     this.emit('error', new Error('Invalid message'));
