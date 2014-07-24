@@ -14,7 +14,7 @@
     "zmq",
     "zeromq",
     "pirate",
-    "lazy",
+    "paranoid",
     "worker",
     "reliable",
     "request",
