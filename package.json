@@ -15,7 +15,10 @@
     "zeromq",
     "pirate",
     "lazy",
-    "client"
+    "worker",
+    "reliable",
+    "request",
+    "reply"
   ],
   "author": "Luke Bond <luke.n.bond@gmail.com>",
   "license": "ISC",
