@@ -41,7 +41,9 @@ PPWorker.prototype._handleMessage = function () {
   }
   else if (args.length == 2) {
     this.workerFn(function (data) {
-      this.worker.send([args[1], data]);
+      var message = [args[1], data];
+      this.worker.send(message);
+      this.emit('work', message);
       this.liveness = this.heartbeatLiveness;
     }.bind(this));
   }
