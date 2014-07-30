@@ -41,6 +41,9 @@ PPWorker.prototype._handleMessage = function () {
   }
   else if (args.length == 2) {
     this.workerFn(function (data) {
+      if (typeof data !== 'string') {
+        data = JSON.stringify(data);
+      }
       var message = [args[1], data];
       this.worker.send(message);
       this.emit('work', message);
