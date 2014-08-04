@@ -23,6 +23,6 @@
   "author": "Luke Bond <luke.n.bond@gmail.com>",
   "license": "ISC",
   "dependencies": {
-    "zmq": "2.7.x"
+    "zmq": "git://github.com/tomgco/zeromq.node.git#ccae9253fbe7b3c502b2ecc411a9619440e8c445"
   }
 }
