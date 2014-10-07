@@ -77,7 +77,7 @@ PPWorker.prototype._checkHeartbeat = function () {
 PPWorker.prototype._initSocket = function () {
   this.worker = zmq.socket('dealer');
   this.worker.setMaxListeners(3);
-  this.worker.identity = 'ppw-' + process.pid;
+  this.worker.identity = 'ppw-' + process.pid + '' + Math.random() + '-' + Math.random();
   this.zmqConnected = false;
   this.worker.connect(this.url);
   this.worker.monitor()
@@ -128,6 +128,7 @@ PPWorker.prototype._heartbeatFailure = function () {
   }
   heartbeatDebug('_heartbeatFailure interval: ' + this.interval);
   this.worker.close();
+  debug('closed');
   this.worker = null;
   this._initSocket();
 };
