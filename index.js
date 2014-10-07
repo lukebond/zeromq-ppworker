@@ -1,8 +1,11 @@
 var zmq = require('zmq'),
     util = require('util'),
+    heartbeatDebug = require('debug')('zeromq-ppworker:heartbeat'),
+    debug = require('debug')('zeromq-ppworker:state'),
     EventEmitter = require('events').EventEmitter;
 
 var PPWorker = function (options, workerFn) {
+  debug('Starting');
   EventEmitter.call(this);
   this.PPP_READY = new Buffer([1]);
   this.PPP_HEARTBEAT = new Buffer([2]);
@@ -27,19 +30,19 @@ util.inherits(PPWorker, EventEmitter);
 
 PPWorker.prototype._handleMessage = function () {
   var args = Array.apply(null, arguments);
-  if (this.reconnectTimerId != -1) {
+  if (this.reconnectTimerId !== -1) {
     // a heartbeat has arrived whilst we were preparing to destroy and recreate the socket. cancel that
     clearTimeout(this.reconnectTimerId);
     this.reconnectTimerId = -1;
   }
-  if (this.heartbeatTimerId == -1) {
+  if (this.heartbeatTimerId === -1) {
     // for some reason we've received a heartbeat or message when the heartbeat timer wasn't set. schedule it again
     this._initHeartbeat();
   }
-  if (args.length == 2 && args[1].toString('utf8') === this.PPP_HEARTBEAT.toString('utf8')) {
+  if (args.length === 2 && args[1].toString('utf8') === this.PPP_HEARTBEAT.toString('utf8')) {
     this.liveness = this.heartbeatLiveness;
   }
-  else if (args.length == 2) {
+  else if (args.length === 2) {
     this.workerFn(function (data) {
       if (typeof data !== 'string') {
         data = JSON.stringify(data);
@@ -74,12 +77,15 @@ PPWorker.prototype._checkHeartbeat = function () {
 PPWorker.prototype._initSocket = function () {
   this.worker = zmq.socket('dealer');
   this.worker.setMaxListeners(3);
-  this.worker.identity = 'ppw-' + process.pid;
+  this.worker.identity = 'ppw-' + process.pid + '' + Math.random() + '-' + Math.random();
+  debug('identity: ' + this.worker.identity);
   this.zmqConnected = false;
   this.worker.connect(this.url);
   this.worker.monitor()
     .on('connect', function () {
+      debug('on connect');
       if (!this.zmqConnected) {
+        debug('on connect and !this.zmqConnected');
         this.worker.removeAllListeners('message');
         this.worker.on('message', this._handleMessage.bind(this));
         this.worker.send(this.PPP_READY);
@@ -89,6 +95,7 @@ PPWorker.prototype._initSocket = function () {
       }
     }.bind(this))
     .on('disconnect', function () {
+      debug('on disconnect and this.zmqConnected');
       if (this.zmqConnected) {
         this.worker.removeAllListeners('message');
         this.zmqConnected = false;
@@ -96,7 +103,7 @@ PPWorker.prototype._initSocket = function () {
           clearTimeout(this.reconnectTimerId);
         }
         this.reconnectTimerId = setTimeout(this._heartbeatFailure.bind(this), this.interval);
-        if (this.heartbeatTimerId != -1) {
+        if (this.heartbeatTimerId !== -1) {
           clearTimeout(this.heartbeatTimerId);
           this.heartbeatTimerId = -1;
         }
@@ -105,11 +112,12 @@ PPWorker.prototype._initSocket = function () {
 };
 
 PPWorker.prototype._initHeartbeat = function () {
-  if (this.heartbeatTimerId != -1) {
+  if (this.heartbeatTimerId !== -1) {
     clearTimeout(this.heartbeatTimerId);
   }
+  heartbeatDebug('initHeartbeat in: ' + this.heartbeatInterval);
   this.heartbeatTimerId = setTimeout(this._checkHeartbeat.bind(this), this.heartbeatInterval);
-  if (this.reconnectTimerId != -1) {
+  if (this.reconnectTimerId !== -1) {
     clearTimeout(this.reconnectTimerId);
     this.reconnectTimerId = -1;
   }
@@ -119,7 +127,9 @@ PPWorker.prototype._heartbeatFailure = function () {
   if (this.interval < this.intervalMax) {
     this.interval *= 2;
   }
+  heartbeatDebug('_heartbeatFailure interval: ' + this.interval);
   this.worker.close();
+  debug('closed');
   this.worker = null;
   this._initSocket();
 };
