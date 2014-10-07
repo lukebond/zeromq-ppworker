@@ -78,6 +78,7 @@ PPWorker.prototype._initSocket = function () {
   this.worker = zmq.socket('dealer');
   this.worker.setMaxListeners(3);
   this.worker.identity = 'ppw-' + process.pid + '' + Math.random() + '-' + Math.random();
+  debug('identity: ' + this.worker.identity);
   this.zmqConnected = false;
   this.worker.connect(this.url);
   this.worker.monitor()
